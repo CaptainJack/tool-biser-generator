@@ -1,4 +1,4 @@
-nextEntityId: 16
+lastEntityId: 16
 entities:
   enums:
   - name: "biser.stub/StubE"
@@ -6,50 +6,44 @@ entities:
     - "A"
     - "B"
   classes:
-  - id: 10
-    name: "biser.stub/StubC.Sealed"
+  - id: 2
+    name: "biser.stub/StubA"
     parent: null
     abstract: true
-    fields:
-    - name: "v"
-      type: "STRING"
-  - id: 2
-    name: "biser.stub/StubA1"
-    parent: "biser.stub/StubA"
-    abstract: false
+    sealed: false
     fields:
     - name: "v"
       type: "INT"
-    - name: "s"
-      type: "LONG"
-  - id: 8
-    name: "biser.stub/StubB2s"
-    parent: "biser.stub/StubB2"
-    abstract: false
-    fields:
-    - name: "v"
-      type: "STRING"
-    - name: "s"
-      type: "BYTE"
-  - id: 5
+  - id: 6
     name: "biser.stub/StubB"
     parent: null
     abstract: false
+    sealed: false
     fields:
     - name: "v"
       type: "STRING"
-  - id: 9
+  - id: 10
     name: "biser.stub/StubC"
     parent: null
     abstract: false
+    sealed: false
     fields: []
-  - id: 15
+  - id: 11
+    name: "biser.stub/StubC.Sealed"
+    parent: null
+    abstract: true
+    sealed: true
+    fields:
+    - name: "v"
+      type: "STRING"
+  - id: 16
     name: "biser.stub/StubM"
     parent: null
     abstract: false
+    sealed: false
     fields:
     - name: "vSealed"
-      type: "Entity<biser.stub/StubC.Sealed>"
+      type: "biser.stub/StubC.Sealed"
     - name: "vBoolean"
       type: "BOOLEAN"
     - name: "vByte"
@@ -73,31 +67,31 @@ entities:
     - name: "vString"
       type: "STRING"
     - name: "vStubA"
-      type: "Entity<biser.stub/StubA>"
+      type: "biser.stub/StubA"
     - name: "vStubA1"
-      type: "Entity<biser.stub/StubA1>"
+      type: "biser.stub/StubA1"
     - name: "vStubA2"
-      type: "Entity<biser.stub/StubA2>"
+      type: "biser.stub/StubA2"
     - name: "vStubANullable"
-      type: "Nullable<Entity<biser.stub/StubA>>"
+      type: "biser.stub/StubA?"
     - name: "vStubA1Nullable"
-      type: "Nullable<Entity<biser.stub/StubA1>>"
+      type: "biser.stub/StubA1?"
     - name: "vStubA2Nullable"
-      type: "Nullable<Entity<biser.stub/StubA2>>"
+      type: "biser.stub/StubA2?"
     - name: "vStubB"
-      type: "Entity<biser.stub/StubB>"
+      type: "biser.stub/StubB"
     - name: "vStubB1"
-      type: "Entity<biser.stub/StubB1>"
+      type: "biser.stub/StubB1"
     - name: "vStubB2"
-      type: "Entity<biser.stub/StubB2>"
+      type: "biser.stub/StubB2"
     - name: "vStubBNullable"
-      type: "Nullable<Entity<biser.stub/StubB>>"
+      type: "biser.stub/StubB?"
     - name: "vStubB1Nullable"
-      type: "Nullable<Entity<biser.stub/StubB1>>"
+      type: "biser.stub/StubB1?"
     - name: "vStubB2Nullable"
-      type: "Nullable<Entity<biser.stub/StubB2>>"
+      type: "biser.stub/StubB2?"
     - name: "vStubE"
-      type: "Entity<biser.stub/StubE>"
+      type: "biser.stub/StubE"
     - name: "lBoolean"
       type: "List<BOOLEAN>"
     - name: "lByte"
@@ -121,11 +115,11 @@ entities:
     - name: "lString"
       type: "List<STRING>"
     - name: "lStubA"
-      type: "List<Entity<biser.stub/StubA>>"
+      type: "List<biser.stub/StubA>"
     - name: "lStubB"
-      type: "List<Entity<biser.stub/StubB>>"
+      type: "List<biser.stub/StubB>"
     - name: "lStubE"
-      type: "List<Entity<biser.stub/StubE>>"
+      type: "List<biser.stub/StubE>"
     - name: "llBoolean"
       type: "List<List<BOOLEAN>>"
     - name: "llByte"
@@ -149,68 +143,86 @@ entities:
     - name: "llString"
       type: "List<List<STRING>>"
     - name: "llStubA"
-      type: "List<List<Entity<biser.stub/StubA>>>"
+      type: "List<List<biser.stub/StubA>>"
     - name: "llStubB"
-      type: "List<List<Entity<biser.stub/StubB>>>"
+      type: "List<List<biser.stub/StubB>>"
     - name: "llStubE"
-      type: "List<List<Entity<biser.stub/StubE>>>"
-  - id: 7
-    name: "biser.stub/StubB2"
-    parent: "biser.stub/StubB"
+      type: "List<List<biser.stub/StubE>>"
+  - id: 3
+    name: "biser.stub/StubA1"
+    parent: "biser.stub/StubA"
     abstract: false
-    fields:
-    - name: "v"
-      type: "STRING"
-    - name: "s"
-      type: "BYTE"
-  - id: 1
-    name: "biser.stub/StubA"
-    parent: null
-    abstract: true
+    sealed: false
     fields:
     - name: "v"
       type: "INT"
-  - id: 3
+    - name: "s"
+      type: "LONG"
+  - id: 4
     name: "biser.stub/StubA2"
     parent: "biser.stub/StubA"
     abstract: true
+    sealed: false
     fields:
     - name: "v"
       type: "INT"
     - name: "s"
       type: "STRING"
-  - id: 11
-    name: "biser.stub/StubC.Sealed.A"
-    parent: "biser.stub/StubC.Sealed"
-    abstract: false
-    fields:
-    - name: "v"
-      type: "STRING"
-  - id: 6
+  - id: 7
     name: "biser.stub/StubB1"
     parent: "biser.stub/StubB"
     abstract: false
+    sealed: false
     fields:
     - name: "v"
       type: "STRING"
     - name: "s"
       type: "BOOLEAN"
-  - id: 4
+  - id: 8
+    name: "biser.stub/StubB2"
+    parent: "biser.stub/StubB"
+    abstract: false
+    sealed: false
+    fields:
+    - name: "v"
+      type: "STRING"
+    - name: "s"
+      type: "BYTE"
+  - id: 5
     name: "biser.stub/StubA2s"
     parent: "biser.stub/StubA2"
     abstract: false
+    sealed: false
     fields:
     - name: "v"
       type: "INT"
     - name: "s"
       type: "STRING"
-  objects:
   - id: 12
+    name: "biser.stub/StubC.Sealed.A"
+    parent: "biser.stub/StubC.Sealed"
+    abstract: false
+    sealed: false
+    fields:
+    - name: "v"
+      type: "STRING"
+  - id: 9
+    name: "biser.stub/StubB2s"
+    parent: "biser.stub/StubB2"
+    abstract: false
+    sealed: false
+    fields:
+    - name: "v"
+      type: "STRING"
+    - name: "s"
+      type: "BYTE"
+  objects:
+  - id: 13
     name: "biser.stub/StubC.Sealed.B"
     parent: "biser.stub/StubC.Sealed"
   - id: 14
-    name: "biser.stub/StubAo2"
-    parent: "biser.stub/StubA"
-  - id: 13
     name: "biser.stub/StubAo1"
+    parent: "biser.stub/StubA"
+  - id: 15
+    name: "biser.stub/StubAo2"
     parent: "biser.stub/StubA"
