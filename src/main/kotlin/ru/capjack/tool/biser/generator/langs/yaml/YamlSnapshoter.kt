@@ -24,20 +24,23 @@ open class YamlSnapshoter<Y : YamlModel, M : Model>(private val ymClass: KClass<
 	
 	private val mapper = ObjectMapper(YAMLFactory().disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER)).registerKotlinModule()
 	
-	fun load(model: M, source: File) {
+	fun load(model: M, source: File): Y {
 		val json = if (source.exists()) mapper.readValue(source, ymClass.java) else ymClass.primaryConstructor!!.call()
 		load(model, json)
+		return json
 	}
 	
-	fun load(model: M, source: String) {
+	fun load(model: M, source: String): Y {
 		val json = mapper.readValue(source, ymClass.java)
 		load(model, json)
+		return json
 	}
 	
-	fun save(model: M, file: File) {
+	fun save(model: M, file: File): Y {
 		val json = ymClass.primaryConstructor!!.call()
 		save(model, json)
 		mapper.writeValue(file, json)
+		return json
 	}
 	
 	fun save(model: M): String {
