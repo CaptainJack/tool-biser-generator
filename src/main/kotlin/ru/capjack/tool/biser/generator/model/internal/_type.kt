@@ -20,7 +20,7 @@ internal class EntityTypeImpl(override val name: EntityName) : EntityType {
 	}
 	
 	override fun hashCode() = Objects.hash("<entity>", name)
-	override fun toString() = "Entity<$name>"
+	override fun toString() = name.toString()
 }
 
 internal class NullableTypeImpl(override val original: Type) : NullableType {
@@ -34,7 +34,7 @@ internal class NullableTypeImpl(override val original: Type) : NullableType {
 	}
 	
 	override fun hashCode() = Objects.hash("<null>", original)
-	override fun toString() = "Nullable<$original>"
+	override fun toString() = "$original?"
 }
 
 internal class ListTypeImpl(override val element: Type) : ListType {

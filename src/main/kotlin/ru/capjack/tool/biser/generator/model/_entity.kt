@@ -28,6 +28,7 @@ interface EnumEntity : Entity {
 interface InheritedEntity : Entity {
 	val id: Int
 	val parent: ClassEntity?
+	val parents: List<ClassEntity>
 }
 
 interface ClassEntity : InheritedEntity {
@@ -36,12 +37,14 @@ interface ClassEntity : InheritedEntity {
 	val fields: List<Field>
 	val children: Collection<InheritedEntity>
 	
+	val allChildren: Set<InheritedEntity>
+	
+	fun isFieldOwner(name: String): Boolean
+	
 	data class Field(
 		val name: String,
 		val type: Type
 	)
-	
-	val allChildren: Set<InheritedEntity>
 }
 
 

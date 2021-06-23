@@ -31,6 +31,9 @@ internal abstract class AbstractInheritedEntity(id: Int, name: EntityName, paren
 	override val parent: ClassEntity?
 		get() = _parent
 	
+	override val parents: List<ClassEntity>
+		get() = _parent?.let { it.parents + it } ?: emptyList()
+	
 	init {
 		@Suppress("LeakingThis")
 		_parent?.children?.add(this)
@@ -107,6 +110,12 @@ internal class ClassEntityImpl(
 	
 	override val allChildren: Set<InheritedEntity>
 		get() = children + children.flatMap { (it as? ClassEntity)?.allChildren.orEmpty() }.toSet()
+	
+	override fun isFieldOwner(name: String): Boolean {
+		if (parent?.isFieldOwner(name) == true) return false
+		
+		return _fields.any { it.name == name }
+	}
 	
 	fun update(abstract: Boolean, sealed: Boolean, parent: ClassEntityImpl?, fields: List<ClassEntity.Field>): Boolean {
 		var changed = updateParent(parent)

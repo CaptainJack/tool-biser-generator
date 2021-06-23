@@ -5,19 +5,19 @@ interface Type {
 	fun <R> accept(visitor: TypeVisitor<R, Unit>): R = accept(visitor, Unit)
 }
 
-enum class PrimitiveType : Type {
-	BOOLEAN,
-	BYTE,
-	INT,
-	LONG,
-	DOUBLE,
-	STRING,
+enum class PrimitiveType(val array: Boolean) : Type {
+	BOOLEAN(false),
+	BYTE(false),
+	INT(false),
+	LONG(false),
+	DOUBLE(false),
+	STRING(false),
 	
-	BOOLEAN_ARRAY,
-	BYTE_ARRAY,
-	INT_ARRAY,
-	LONG_ARRAY,
-	DOUBLE_ARRAY;
+	BOOLEAN_ARRAY(true),
+	BYTE_ARRAY(true),
+	INT_ARRAY(true),
+	LONG_ARRAY(true),
+	DOUBLE_ARRAY(true);
 	
 	override fun <R, D> accept(visitor: TypeVisitor<R, D>, data: D): R = visitor.visitPrimitiveType(this, data)
 }

@@ -9,8 +9,9 @@ class CodersTypeAggregator(private val model: Model) : TypeVisitor<Unit, Mutable
 		}
 		
 		override fun visitEntityType(type: EntityType, data: MutableSet<Type>) {
-			data.add(type)
-			model.getEntity(type.name).accept(this@CodersTypeAggregator, data)
+			if (data.add(type)) {
+				model.getEntity(type.name).accept(this@CodersTypeAggregator, data)
+			}
 		}
 		
 		override fun visitListType(type: ListType, data: MutableSet<Type>) {
@@ -23,32 +24,37 @@ class CodersTypeAggregator(private val model: Model) : TypeVisitor<Unit, Mutable
 		}
 		
 		override fun visitNullableType(type: NullableType, data: MutableSet<Type>) {
-			data.add(type)
-			type.original.accept(this@CodersTypeAggregator, data)
+			if (data.add(type)) {
+				type.original.accept(this@CodersTypeAggregator, data)
+			}
 		}
 	}
 	
 	override fun visitPrimitiveType(type: PrimitiveType, data: MutableSet<Type>) {}
 	
 	override fun visitEntityType(type: EntityType, data: MutableSet<Type>) {
-		data.add(type)
-		model.getEntity(type.name).accept(this, data)
+		if (data.add(type)) {
+			model.getEntity(type.name).accept(this, data)
+		}
 	}
 	
 	override fun visitListType(type: ListType, data: MutableSet<Type>) {
-		data.add(type)
-		type.element.accept(this, data)
+		if (data.add(type)) {
+			type.element.accept(this, data)
+		}
 	}
 	
 	override fun visitMapType(type: MapType, data: MutableSet<Type>) {
-		data.add(type)
-		type.key.accept(this, data)
-		type.value.accept(this, data)
+		if (data.add(type)) {
+			type.key.accept(this, data)
+			type.value.accept(this, data)
+		}
 	}
 	
 	override fun visitNullableType(type: NullableType, data: MutableSet<Type>) {
-		data.add(type)
-		type.original.accept(this, data)
+		if (data.add(type)) {
+			type.original.accept(this, data)
+		}
 	}
 	
 	///
@@ -57,14 +63,15 @@ class CodersTypeAggregator(private val model: Model) : TypeVisitor<Unit, Mutable
 	}
 	
 	override fun visitClassEntity(entity: ClassEntity, data: MutableSet<Type>) {
-		entity.parent?.accept(this, data)
+		entity.children.forEach {
+			model.resolveEntityType(it.name).accept(this, data)
+		}
 		entity.fields.forEach {
 			it.type.accept(fieldsAggregator, data)
 		}
 	}
 	
 	override fun visitObjectEntity(entity: ObjectEntity, data: MutableSet<Type>) {
-		entity.parent?.accept(this, data)
 	}
 }
 

@@ -13,14 +13,15 @@ import ru.capjack.tool.utils.collections.getOrAdd
 import ru.capjack.tool.utils.collections.mutableKeyedSetOf
 
 open class DefaultModel : Model {
-	final override var mutation: Model.Mutation = Model.Mutation.ABSENT
-		private set
-	final override var nextEntityId = 1
-		private set
-	
+	private var _mutation: Model.Mutation = Model.Mutation.ABSENT
+	private val _entities = mutableKeyedSetOf(Entity::name)
 	override val nameSpace = NameSpace()
 	
-	private val _entities = mutableKeyedSetOf(Entity::name)
+	final override var lastEntityId = 1
+		private set
+	
+	override val mutation: Model.Mutation
+		get() = _mutation
 	
 	private val cacheEntityTypes = mutableKeyedSetOf<EntityName, EntityType> { it.name }
 	private val cacheNullableTypes = mutableKeyedSetOf(NullableType::original)
@@ -31,16 +32,14 @@ open class DefaultModel : Model {
 		get() = _entities
 	
 	
-	override fun commit(nextEntityId: Int) {
-		require(nextEntityId >= this.nextEntityId)
-		mutation = Model.Mutation.ABSENT
-		this.nextEntityId = nextEntityId
+	override fun commit(lastEntityId: Int) {
+		require(lastEntityId >= this.lastEntityId)
+		_mutation = Model.Mutation.ABSENT
+		this.lastEntityId = lastEntityId
 	}
 	
 	override fun resolveEntityName(name: String): EntityName {
-		val s = name.indexOf('/')
-		require(s >= 0)
-		return resolveEntityName(name.substring(0, s), name.substring(s + 1))
+		return nameSpace.resolveEntityName(name)
 	}
 	
 	override fun resolveEntityName(external: String?, internal: String): EntityName {
@@ -80,35 +79,35 @@ open class DefaultModel : Model {
 		return requireNotNull(findEnumEntity(name)) { "Entity by name $name is not registered" }
 	}
 	
-	override fun resolveClassEntity(name: EntityName, parent: EntityName?, fields: List<ClassEntity.Field>, abstract: Boolean, sealed: Boolean): ClassEntity {
+	override fun provideClassEntity(name: EntityName, parent: EntityName?, fields: List<ClassEntity.Field>, abstract: Boolean, sealed: Boolean): ClassEntity {
 		return doResolveEntity<ClassEntity, ClassEntityImpl>(name,
-			{ ClassEntityImpl(nextEntityId++, name, abstract, sealed, tryGetClassEntityImpl(parent), fields) },
+			{ ClassEntityImpl(++lastEntityId, name, abstract, sealed, tryGetClassEntityImpl(parent), fields) },
 			{ it.update(abstract, sealed, tryGetClassEntityImpl(parent), fields) }
 		)
 	}
 	
-	override fun resolveObjectEntity(name: EntityName, parent: EntityName?): ObjectEntity {
+	override fun provideObjectEntity(name: EntityName, parent: EntityName?): ObjectEntity {
 		return doResolveEntity<ObjectEntity, ObjectEntityImpl>(name,
-			{ ObjectEntityImpl(nextEntityId++, name, tryGetClassEntityImpl(parent)) },
+			{ ObjectEntityImpl(++lastEntityId, name, tryGetClassEntityImpl(parent)) },
 			{ it.update(tryGetClassEntityImpl(parent)) }
 		)
 	}
 	
-	override fun resolveEnumEntity(name: EntityName, values: List<String>): EnumEntity {
+	override fun provideEnumEntity(name: EntityName, values: List<String>): EnumEntity {
 		return doResolveEntity<EnumEntity, EnumEntityImpl>(name,
 			{ EnumEntityImpl(name, values) },
 			{ it.update(values) }
 		)
 	}
 	
-	override fun resolveClassEntity(id: Int, name: EntityName, parent: EntityName?, fields: List<ClassEntity.Field>, abstract: Boolean, sealed: Boolean): ClassEntity {
+	override fun provideClassEntity(id: Int, name: EntityName, parent: EntityName?, fields: List<ClassEntity.Field>, abstract: Boolean, sealed: Boolean): ClassEntity {
 		return doResolveEntity<ClassEntity, ClassEntityImpl>(id, name,
 			{ ClassEntityImpl(id, name, abstract, sealed, tryGetClassEntityImpl(parent), fields) },
 			{ it.update(id, abstract, sealed, tryGetClassEntityImpl(parent), fields) }
 		)
 	}
 	
-	override fun resolveObjectEntity(id: Int, name: EntityName, parent: EntityName?): ObjectEntity {
+	override fun provideObjectEntity(id: Int, name: EntityName, parent: EntityName?): ObjectEntity {
 		return doResolveEntity<ObjectEntity, ObjectEntityImpl>(id, name,
 			{ ObjectEntityImpl(id, name, tryGetClassEntityImpl(parent)) },
 			{ it.update(id, tryGetClassEntityImpl(parent)) }
@@ -155,24 +154,22 @@ open class DefaultModel : Model {
 		throw IllegalStateException("Entity name $name already registered not as ${E::class.simpleName}")
 	}
 	
+	private val primitiveTypeValues = PrimitiveType.values().map { it.name }
+	
 	override fun resolveType(type: String): Type {
-		return if (type.endsWith('>')) {
-			when {
-				type.startsWith("Entity<") -> resolveEntityType(resolveEntityName(type.substring(7, type.length - 1))) // Entity<$name>
-				type.startsWith("Nullable<") -> resolveNullableType(resolveType(type.substring(9, type.length - 1))) // Nullable<$original>
-				type.startsWith("List<") -> resolveListType(resolveType(type.substring(5, type.length - 1))) // List<$element>
-				type.startsWith("Map<") -> type.indexOf(',').let { //Map<$key,$value>
-					resolveMapType(
-						resolveType(type.substring(4, it)),
-						resolveType(type.substring(it + 1, type.length - 1))
-					)
-				}
-				else -> throw IllegalArgumentException("Illegal type $type")
+		return when {
+			type in primitiveTypeValues -> PrimitiveType.valueOf(type)
+			type.endsWith('?')          -> resolveNullableType(resolveType(type.substring(0, type.length - 1))) // $original?
+			type.startsWith("List<")    -> resolveListType(resolveType(type.substring(5, type.length - 1))) // List<$element>
+			type.startsWith("Map<")     -> type.indexOf(',').let { //Map<$key,$value>
+				resolveMapType(
+					resolveType(type.substring(4, it)),
+					resolveType(type.substring(it + 1, type.length - 1))
+				)
 			}
+			else                        -> resolveEntityType(resolveEntityName(type)) // $name
 		}
-		else {
-			PrimitiveType.valueOf(type)
-		}
+		
 	}
 	
 	override fun resolveEntityType(name: EntityName): EntityType {
@@ -193,7 +190,7 @@ open class DefaultModel : Model {
 			.getOrAdd(value) { MapTypeImpl(key, value) }
 	}
 	
-	private fun raiseMutation(mutation: Model.Mutation) {
-		this.mutation = this.mutation.raiseTo(mutation)
+	protected fun raiseMutation(mutation: Model.Mutation) {
+		_mutation = _mutation.raiseTo(mutation)
 	}
 }

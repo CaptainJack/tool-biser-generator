@@ -2,7 +2,7 @@ package ru.capjack.tool.biser.generator.langs.yaml
 
 open class YamlModel {
 	
-	var nextEntityId: Int = 0
+	var lastEntityId: Int = 0
 	val entities: Entities = Entities()
 	
 	class Entities(

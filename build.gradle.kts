@@ -1,6 +1,6 @@
 plugins {
 	kotlin("jvm") version "1.5.10"
-	id("ru.capjack.publisher") version "0.2.0"
+	id("ru.capjack.publisher") version "1.0.0"
 }
 
 group = "ru.capjack.tool"
@@ -25,5 +25,5 @@ dependencies {
 	
 	testImplementation(kotlin("test"))
 	testImplementation("ch.qos.logback:logback-classic:1.2.3")
-	testImplementation("ru.capjack.tool:tool-biser:0.10.1")
+	testImplementation("ru.capjack.tool:tool-biser:1.0.0")
 }

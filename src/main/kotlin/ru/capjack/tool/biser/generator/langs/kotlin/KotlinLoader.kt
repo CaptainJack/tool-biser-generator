@@ -30,15 +30,13 @@ open class KotlinLoader<M : Model>(
 	protected val source: KotlinSource,
 	protected val model: M,
 ) {
-	fun load(filter: Predicate<ClassDescriptor>) {
+	open fun load(filter: Predicate<ClassDescriptor>) {
 		source.classDescriptors.forEach {
 			if (filter.test(it)) processClassDescriptor(it)
 		}
 	}
 	
 	protected open fun processClassDescriptor(descriptor: ClassDescriptor) {
-		resolveName(descriptor)
-		
 		when (descriptor.kind) {
 			ClassKind.CLASS      -> loadClassEntity(descriptor)
 			ClassKind.OBJECT     -> loadObjectEntity(descriptor)
@@ -53,7 +51,7 @@ open class KotlinLoader<M : Model>(
 		val constructor = requireNotNull(descriptor.unsubstitutedPrimaryConstructor)
 		val fields = constructor.valueParameters.map { ClassEntity.Field(it.name.identifier, resolveType(it.type)) }
 		
-		return model.resolveClassEntity(
+		return model.provideClassEntity(
 			name,
 			parent?.name,
 			fields,
@@ -66,7 +64,7 @@ open class KotlinLoader<M : Model>(
 		val name = resolveName(descriptor)
 		val parent = descriptor.getSuperClassNotAny()?.let(::resolveClassEntity)
 		
-		return model.resolveObjectEntity(name, parent?.name)
+		return model.provideObjectEntity(name, parent?.name)
 	}
 	
 	private fun loadEnumEntity(descriptor: ClassDescriptor): EnumEntity {
@@ -78,7 +76,7 @@ open class KotlinLoader<M : Model>(
 			.map { it.name.toString() }
 			.toList()
 		
-		return model.resolveEnumEntity(name, values)
+		return model.provideEnumEntity(name, values)
 	}
 	
 	protected fun resolveName(descriptor: ClassifierDescriptor): EntityName {

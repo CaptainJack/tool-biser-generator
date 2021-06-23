@@ -5,7 +5,7 @@ import ru.capjack.tool.utils.collections.getOrAdd
 import ru.capjack.tool.utils.collections.mutableKeyedSetOf
 
 
-open class SeparatedNameContainer(protected val namesParent: SeparatedName?) {
+open class SeparatedNameContainer(protected val nameSpace: NameSpace, protected val namesParent: SeparatedName?) {
 	protected val names = mutableKeyedSetOf(SeparatedName::self)
 	
 	fun resolveEntityName(name: String, separator: String = "."): EntityName {
@@ -15,11 +15,11 @@ open class SeparatedNameContainer(protected val namesParent: SeparatedName?) {
 	}
 	
 	private fun resolveEntityName0(name: String): EntityName {
-		return names.getOrAdd(name) { EntityName(it, namesParent) }.cast { "Name $it is already registered as Package" }
+		return names.getOrAdd(name) { EntityName(nameSpace, it, namesParent) }.cast { "Name $it is already registered as Package" }
 	}
 }
 
-open class PackageNameContainer(namesParent: SeparatedName?) : SeparatedNameContainer(namesParent) {
+open class PackageNameContainer(nameSpace: NameSpace, namesParent: SeparatedName?) : SeparatedNameContainer(nameSpace, namesParent) {
 	
 	fun resolvePackageName(name: String, separator: String = "."): PackageName {
 		val i = name.indexOf(separator)
@@ -28,11 +28,12 @@ open class PackageNameContainer(namesParent: SeparatedName?) : SeparatedNameCont
 	}
 	
 	private fun resolvePackageName0(name: String): PackageName {
-		return names.getOrAdd(name) { PackageName(it, namesParent) }.cast { "Name $it is already registered as Entity" }
+		return names.getOrAdd(name) { PackageName(nameSpace, it, namesParent) }.cast { "Name $it is already registered as Entity" }
 	}
 }
 
 abstract class SeparatedName(
+	val nameSpace: NameSpace,
 	val self: String,
 	val parent: SeparatedName? = null
 ) {
@@ -75,8 +76,8 @@ abstract class SeparatedName(
 	}
 }
 
-class EntityName(name: String, parent: SeparatedName? = null) : SeparatedName(name, parent) {
-	override val children = SeparatedNameContainer(this)
+class EntityName(nameSpace: NameSpace, name: String, parent: SeparatedName? = null) : SeparatedName(nameSpace, name, parent) {
+	override val children = SeparatedNameContainer(nameSpace,this)
 	
 	val external: List<String> by lazy {
 		this.parent?.let { if (it is EntityName) it.external else it.full } ?: emptyList()
@@ -89,10 +90,14 @@ class EntityName(name: String, parent: SeparatedName? = null) : SeparatedName(na
 	val path: List<String> by lazy {
 		external + internal.first()
 	}
+	
+	override fun toString(): String {
+		return external.joinToString(".") + '/' + internal.joinToString(".")
+	}
 }
 
-class PackageName(name: String, parent: SeparatedName? = null) : SeparatedName(name, parent) {
-	override val children = PackageNameContainer(this)
+class PackageName(nameSpace: NameSpace, name: String, parent: SeparatedName? = null) : SeparatedName(nameSpace, name, parent) {
+	override val children = PackageNameContainer(nameSpace,this)
 	
 	fun resolvePackageName(name: String, separator: String = "."): PackageName {
 		return children.resolvePackageName(name, separator)
@@ -100,10 +105,15 @@ class PackageName(name: String, parent: SeparatedName? = null) : SeparatedName(n
 }
 
 class NameSpace {
-	private val names = PackageNameContainer(null)
+	private val names = PackageNameContainer(this, null)
 	
-	fun resolveEntityName(name: String, separator: String = "."): EntityName {
-		return names.resolveEntityName(name, separator)
+	fun resolveEntityName(name: String, pathSeparator : String = ".", scopeSeparator: String = "/"): EntityName {
+		val s = name.indexOf(scopeSeparator)
+		require(s >= 0) { "Bad EntityName '$name'" }
+		if (s == 0) {
+			return names.resolveEntityName(name.substring(scopeSeparator.length), pathSeparator)
+		}
+		return resolvePackageName(name.substring(0, s), pathSeparator).resolveEntityName(name.substring(s + scopeSeparator.length), pathSeparator)
 	}
 	
 	fun resolvePackageName(name: String, separator: String = "."): PackageName {

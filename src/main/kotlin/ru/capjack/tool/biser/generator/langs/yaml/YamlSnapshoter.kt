@@ -7,6 +7,7 @@ import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import ru.capjack.tool.biser.generator.model.ClassEntity
 import ru.capjack.tool.biser.generator.model.EntityVisitor
 import ru.capjack.tool.biser.generator.model.EnumEntity
+import ru.capjack.tool.biser.generator.model.InheritedEntity
 import ru.capjack.tool.biser.generator.model.Model
 import ru.capjack.tool.biser.generator.model.ObjectEntity
 import java.io.File
@@ -46,7 +47,7 @@ open class YamlSnapshoter<Y : YamlModel, M : Model>(private val ymClass: KClass<
 	}
 	
 	protected open fun save(model: M, json: Y) {
-		json.nextEntityId = model.nextEntityId
+		json.lastEntityId = model.lastEntityId
 		
 		val visitor = object : EntityVisitor<Unit, Y> {
 			override fun visitEnumEntity(entity: EnumEntity, data: Y) {
@@ -77,17 +78,19 @@ open class YamlSnapshoter<Y : YamlModel, M : Model>(private val ymClass: KClass<
 			}
 		}
 		
-		model.entities.forEach { it.accept(visitor, json) }
+		model.entities
+			.sortedBy { if (it is InheritedEntity) it.id * (it.parents.size * 100).coerceAtLeast(1) else 0 }
+			.forEach { it.accept(visitor, json) }
 	}
 	
 	protected open fun load(model: M, json: Y) {
 		
 		json.entities.enums.forEach {
-			model.resolveEnumEntity(model.resolveEntityName(it.name), it.values)
+			model.provideEnumEntity(model.resolveEntityName(it.name), it.values)
 		}
 		
 		json.entities.classes.forEach { e ->
-			model.resolveClassEntity(
+			model.provideClassEntity(
 				e.id,
 				model.resolveEntityName(e.name),
 				e.parent?.let(model::resolveEntityName),
@@ -103,14 +106,14 @@ open class YamlSnapshoter<Y : YamlModel, M : Model>(private val ymClass: KClass<
 		}
 		
 		json.entities.objects.forEach {
-			model.resolveObjectEntity(
+			model.provideObjectEntity(
 				it.id,
 				model.resolveEntityName(it.name),
 				it.parent?.let(model::resolveEntityName)
 			)
 		}
 		
-		model.commit(json.nextEntityId)
+		model.commit(json.lastEntityId)
 	}
 	
 }

@@ -1,23 +1,20 @@
-package ru.capjack.tool.biser.generator.langs.kotlin
+package ru.capjack.tool.biser.generator.langs.typescript
 
+import ru.capjack.tool.biser.generator.Code
 import ru.capjack.tool.biser.generator.CoderNameScopeVisitor
 import ru.capjack.tool.biser.generator.CodersTypeAggregator
-import ru.capjack.tool.biser.generator.Code
 import ru.capjack.tool.biser.generator.DependedCode
 import ru.capjack.tool.biser.generator.langs.DefaultCoderNameVisitor
 import ru.capjack.tool.biser.generator.langs.DefaultCodersGenerator
-import ru.capjack.tool.biser.generator.model.EntityName
-import ru.capjack.tool.biser.generator.model.Model
-import ru.capjack.tool.biser.generator.model.Type
-import ru.capjack.tool.biser.generator.model.TypeVisitor
+import ru.capjack.tool.biser.generator.model.*
 import java.nio.file.Path
 
-class KotlinCodersGenerator(
+class TsCodersGenerator(
 	model: Model,
 	targetPackage: String,
 	encodersName: String? = null,
 	decodersName: String? = null,
-	private val internal: Boolean = false,
+	private val generateSources: Boolean = true
 ) : DefaultCodersGenerator(
 	model,
 	targetPackage,
@@ -26,7 +23,7 @@ class KotlinCodersGenerator(
 	"ru.capjack.tool.biser/Encoders",
 	"ru.capjack.tool.biser/Decoders"
 ) {
-	override val typeNames = KotlinTypeNameVisitor()
+	override val typeNames: TypeVisitor<String, DependedCode> = TsTypeNameVisitor()
 	
 	override fun createOuterCoderNameScopeVisitor(biserCodersName: EntityName, generatedCodersName: EntityName): CoderNameScopeVisitor {
 		return OuterCoderNameScopeVisitor(biserCodersName, generatedCodersName)
@@ -42,7 +39,7 @@ class KotlinCodersGenerator(
 		encoderNames: DefaultCoderNameVisitor,
 		typeNames: TypeVisitor<String, DependedCode>
 	): TypeVisitor<Unit, Code> {
-		return KotlinEncoderGenerator(model, encoders, encoderNames, typeNames)
+		return TsEncoderGenerator(model, encoders, encoderNames, typeNames)
 	}
 	
 	override fun createDecoderGenerator(
@@ -51,7 +48,65 @@ class KotlinCodersGenerator(
 		decoderNames: DefaultCoderNameVisitor,
 		typeNames: TypeVisitor<String, DependedCode>
 	): TypeVisitor<Unit, Code> {
-		return KotlinDecoderGenerator(model, decoders, decoderNames, typeNames)
+		return TsDecoderGenerator(model, decoders, decoderNames, typeNames)
+	}
+	
+	override fun generate(targetSourceDir: Path) {
+		super.generate(targetSourceDir)
+		if (generateSources) {
+			
+			val entities = mutableSetOf<Entity>()
+			val aggregator = object : TypeVisitor<Unit, MutableSet<Entity>>, EntityVisitor<Unit, MutableSet<Entity>> {
+				override fun visitPrimitiveType(type: PrimitiveType, data: MutableSet<Entity>) {}
+				
+				override fun visitEntityType(type: EntityType, data: MutableSet<Entity>) {
+					val entity = model.getEntity(type.name)
+					entity.accept(this, data)
+				}
+				
+				override fun visitListType(type: ListType, data: MutableSet<Entity>) {
+					type.element.accept(this, data)
+				}
+				
+				override fun visitMapType(type: MapType, data: MutableSet<Entity>) {
+					type.key.accept(this, data)
+					type.value.accept(this, data)
+				}
+				
+				override fun visitNullableType(type: NullableType, data: MutableSet<Entity>) {
+					type.original.accept(this, data)
+				}
+				
+				override fun visitEnumEntity(entity: EnumEntity, data: MutableSet<Entity>) {
+					data.add(entity)
+				}
+				
+				override fun visitClassEntity(entity: ClassEntity, data: MutableSet<Entity>) {
+					if (data.add(entity)) {
+						entity.parent?.accept(this, data)
+						entity.fields.forEach { it.type.accept(this, data) }
+						entity.children.forEach { it.accept(this, data) }
+					}
+				}
+				
+				override fun visitObjectEntity(entity: ObjectEntity, data: MutableSet<Entity>) {
+					if (data.add(entity)) {
+						entity.parent?.accept(this, data)
+					}
+				}
+			}
+			
+			encoders.forEach { it.accept(aggregator, entities) }
+			decoders.forEach { it.accept(aggregator, entities) }
+			
+			val generator = TsSourceGenerator(typeNames)
+			
+			entities.forEach {
+				val codeFile = TsCodeFile(it.name)
+				it.accept(generator, codeFile.body)
+				codeFile.save(targetSourceDir)
+			}
+		}
 	}
 	
 	override fun generate(targetSourceDir: Path, targetEntityName: EntityName, types: Set<Type>, generator: TypeVisitor<Unit, Code>) {
@@ -63,8 +118,10 @@ class KotlinCodersGenerator(
 		val aggregator = CodersTypeAggregator(model)
 		types.forEach { it.accept(aggregator, allTypes) }
 		
-		val codeFile = KotlinCodeFile(targetEntityName)
-		val code = codeFile.body.identBracketsCurly((if (internal) "internal " else "") + "object " + targetEntityName.self + " ")
+		val codeFile = TsCodeFile(targetEntityName)
+		codeFile.header.line("// noinspection DuplicatedCode,JSUnusedLocalSymbols")
+		codeFile.header.line()
+		val code = codeFile.body.identBracketsCurly("export namespace " + targetEntityName.self + " ")
 		
 		allTypes.forEach { it.accept(generator, code) }
 		

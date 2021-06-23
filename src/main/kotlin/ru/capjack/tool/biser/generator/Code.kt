@@ -1,24 +1,31 @@
-package ru.capjack.tool.biser.generator.code
+package ru.capjack.tool.biser.generator
 
 import ru.capjack.tool.biser.generator.model.EntityName
+import ru.capjack.tool.biser.generator.model.NameSpace
 import ru.capjack.tool.utils.collections.mutableKeyedSetOf
 import java.nio.file.Path
 import java.util.*
 import kotlin.io.path.createDirectories
 import kotlin.io.path.writeText
 
-abstract class CodeFile : DependedCode {
-	protected val dependencies = mutableKeyedSetOf(CodeDependency::entity)
+@Suppress("LeakingThis")
+abstract class CodeFile(private val nameSpace: NameSpace) : DependedCode {
+	protected val dependencies = mutableKeyedSetOf(CodeDependency::name)
+	val header = Code(0, this)
 	val body = Code(0, this)
 	
 	override fun addDependency(dependency: CodeDependency) {
-		val d = dependencies[dependency.entity]
+		val d = dependencies[dependency.name]
 		if (d == null) {
 			dependencies.add(dependency)
 		}
 		else {
 			d.aliases.addAll(dependency.aliases)
 		}
+	}
+	
+	override fun addDependency(name: String, vararg aliases: String) {
+		addDependency(CodeDependency(nameSpace.resolveEntityName(name), *aliases))
 	}
 	
 	open fun save(path: Path) {
@@ -30,7 +37,9 @@ abstract class CodeFile : DependedCode {
 		path.writeText(builder.toString())
 	}
 	
-	protected abstract fun writeHeader(builder: StringBuilder)
+	protected open fun writeHeader(builder: StringBuilder) {
+		header.write(builder)
+	}
 	
 	protected open fun writeBody(builder: StringBuilder) {
 		body.write(builder)
@@ -38,8 +47,12 @@ abstract class CodeFile : DependedCode {
 }
 
 
-class CodeDependency(val entity: EntityName) {
+class CodeDependency(val name: EntityName) {
 	val aliases = mutableSetOf<String>()
+	
+	constructor(entity: EntityName, vararg aliases: String) : this(entity) {
+		this.aliases.addAll(aliases)
+	}
 }
 
 interface CodeStatement {
@@ -55,8 +68,14 @@ class CodeLine(private val content: String) : CodeStatement {
 interface DependedCode {
 	fun addDependency(dependency: CodeDependency)
 	
+	fun addDependency(name: String, vararg aliases: String)
+	
 	fun addDependency(name: EntityName) {
 		addDependency(CodeDependency(name))
+	}
+	
+	fun addDependency(name: EntityName, vararg aliases: String) {
+		addDependency(CodeDependency(name, *aliases))
 	}
 }
 
@@ -65,6 +84,10 @@ class Code(private val ident: Int, private val file: CodeFile) : CodeStatement, 
 	
 	override fun addDependency(dependency: CodeDependency) {
 		file.addDependency(dependency)
+	}
+	
+	override fun addDependency(name: String, vararg aliases: String) {
+		file.addDependency(name, *aliases)
 	}
 	
 	fun line(v: String) {

@@ -1,18 +1,20 @@
 package ru.capjack.tool.biser.generator.langs.kotlin
 
-import ru.capjack.tool.biser.generator.code.CodeFile
+import ru.capjack.tool.biser.generator.CodeFile
 import ru.capjack.tool.biser.generator.model.EntityName
 import java.nio.file.Path
 
-class KotlinCodeFile(private val entityName: EntityName) : CodeFile() {
+class KotlinCodeFile(private val name: EntityName) : CodeFile(name.nameSpace) {
 	
 	override fun save(path: Path) {
-		val filePath = path.resolve(entityName.path.joinToString("/") + ".kt")
+		val filePath = path.resolve(name.path.joinToString("/") + ".kt")
 		super.save(filePath)
 	}
 	
 	override fun writeHeader(builder: StringBuilder) {
-		entityName.external.also {
+		super.writeHeader(builder)
+		
+		name.external.also {
 			if (it.isNotEmpty()) {
 				builder.append("package ${it.joinToString(".")}\n\n")
 			}
@@ -20,11 +22,11 @@ class KotlinCodeFile(private val entityName: EntityName) : CodeFile() {
 		
 		if (dependencies.isNotEmpty()) {
 			dependencies
-				.filter { entityName.external != it.entity.external }
-				.distinctBy { it.entity.path }
-				.sortedBy { it.entity.path.joinToString(".") }
+				.filter { name.external != it.name.external }
+				.distinctBy { it.name.path }
+				.sortedBy { it.name.path.joinToString(".") }
 				.forEach {
-					builder.append("import ${it.entity.path.joinToString(".")}")
+					builder.append("import ${it.name.path.joinToString(".")}")
 					if (it.aliases.isNotEmpty()) {
 						builder.append(" as ${it.aliases.first()}")
 					}

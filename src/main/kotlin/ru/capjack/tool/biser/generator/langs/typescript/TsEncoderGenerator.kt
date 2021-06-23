@@ -1,11 +1,12 @@
-package ru.capjack.tool.biser.generator.langs.kotlin
+package ru.capjack.tool.biser.generator.langs.typescript
 
 import ru.capjack.tool.biser.generator.Code
+import ru.capjack.tool.biser.generator.CodeDependency
 import ru.capjack.tool.biser.generator.DependedCode
 import ru.capjack.tool.biser.generator.langs.DefaultWriteCallVisitor
 import ru.capjack.tool.biser.generator.model.*
 
-class KotlinEncoderGenerator(
+class TsEncoderGenerator(
 	private val model: Model,
 	private val publicTypes: Set<Type>,
 	private val encoderNames: TypeVisitor<String, DependedCode>,
@@ -15,7 +16,7 @@ class KotlinEncoderGenerator(
 	private val writeCalls = DefaultWriteCallVisitor(encoderNames)
 	
 	private val dependencyEncoder = model.resolveEntityName("ru.capjack.tool.biser/Encoder")
-	private val dependencyUnknownEntityEncoderException = model.resolveEntityName("ru.capjack.tool.biser/UnknownEntityEncoderException")
+	private val dependencyUnknownEntityEncoderException = CodeDependency(model.resolveEntityName("ru.capjack.tool.biser/_exceptions"), "UnknownEntityEncoderException")
 	
 	override fun visitPrimitiveType(type: PrimitiveType, data: Code) {
 	}
@@ -27,13 +28,13 @@ class KotlinEncoderGenerator(
 	
 	override fun visitListType(type: ListType, data: Code) {
 		writeDeclaration(type, data) {
-			line(writeCalls.visit(type, data, "it"))
+			line(writeCalls.visit(type, data, "v"))
 		}
 	}
 	
 	override fun visitMapType(type: MapType, data: Code) {
 		writeDeclaration(type, data) {
-			line(writeCalls.visit(type, data, "it"))
+			line(writeCalls.visit(type, data, "v"))
 		}
 	}
 	
@@ -43,9 +44,9 @@ class KotlinEncoderGenerator(
 		}
 		
 		writeDeclaration(type, data) {
-			identBracketsCurly("if (it == null) writeInt(0) else ") {
+			identBracketsCurly("if (v == null) writeInt(0) else ") {
 				line("writeInt(1)")
-				line(writeCalls.visit(type.original, data, "it"))
+				line(writeCalls.visit(type.original, data, "v"))
 			}
 		}
 	}
@@ -56,13 +57,11 @@ class KotlinEncoderGenerator(
 		val type = model.resolveEntityType(entity.name)
 		val typeName = type.accept(typeNames, data)
 		writeDeclaration(type, data) {
-			line("writeInt(when (it) {")
-			ident {
+			identBracketsCurly("switch (v) ") {
 				entity.values.forEachIndexed { i, v ->
-					line("$typeName.$v -> $i")
+					line("case $typeName.$v: w.writeInt($i); break")
 				}
 			}
-			line("})")
 		}
 	}
 	
@@ -70,31 +69,31 @@ class KotlinEncoderGenerator(
 		writeDeclaration(model.resolveEntityType(entity.name), data) {
 			if (entity.children.isNotEmpty()) {
 				
-				identBracketsCurly("when (it) ") {
-					entity.children.forEach { child ->
-						val childType = model.resolveEntityType(child.name)
-						val childTypeName = childType.accept(typeNames, data)
-						
-						identBracketsCurly("is $childTypeName -> ") {
-							if (child is ObjectEntity || (child is ClassEntity && child.children.isEmpty())) {
-								line("writeInt(${child.id})")
-							}
-							line("${childType.accept(encoderNames, data)}(it)")
-						}
-					}
+				entity.children.forEachIndexed { i, child ->
+					val childType = model.resolveEntityType(child.name)
+					val childTypeName = childType.accept(typeNames, data)
 					
-					if (entity.abstract) {
-						if (!entity.sealed) {
-							data.addDependency(dependencyUnknownEntityEncoderException)
-							line("else -> throw UnknownEntityEncoderException(it)")
+					
+					identBracketsCurly("${if (i != 0) "else " else ""}if (v instanceof $childTypeName)") {
+						if (child is ObjectEntity || (child is ClassEntity && child.children.isEmpty())) {
+							line("w.writeInt(${child.id})")
 						}
-					}
-					else {
-						identBracketsCurly("else -> ") {
-							writeClassEntityFields(entity, data)
-						}
+						line("${childType.accept(encoderNames, data)}(w, v)")
 					}
 				}
+				
+				if (entity.abstract) {
+					if (!entity.sealed) {
+						data.addDependency(dependencyUnknownEntityEncoderException)
+						line("else -> throw new UnknownEntityEncoderException(it)")
+					}
+				}
+				else {
+					identBracketsCurly("else -> ") {
+						writeClassEntityFields(entity, data)
+					}
+				}
+				
 			}
 			else {
 				writeClassEntityFields(entity, data)
@@ -110,11 +109,11 @@ class KotlinEncoderGenerator(
 	
 	private fun Code.writeClassEntityFields(entity: ClassEntity, code: Code) {
 		if (entity.children.isNotEmpty()) {
-			line("writeInt(${entity.id})")
+			line("w.writeInt(${entity.id})")
 		}
 		
 		entity.fields.forEach { field ->
-			line(writeCalls.visit(field.type, code, "it.${field.name}"))
+			line("w." + writeCalls.visit(field.type, code, "v.${field.name}"))
 		}
 	}
 	
@@ -125,7 +124,7 @@ class KotlinEncoderGenerator(
 		val coderName = type.accept(encoderNames, code)
 		val typeName = type.accept(typeNames, code)
 		
-		val block = code.identBracketsCurly((if (publicTypes.contains(type)) "" else "private ") + "val $coderName: Encoder<$typeName> = ")
+		val block = code.identBracketsCurly((if (publicTypes.contains(type)) "export " else "") + "const $coderName: Encoder<$typeName> = (w, v) => ")
 		
 		code.line()
 		

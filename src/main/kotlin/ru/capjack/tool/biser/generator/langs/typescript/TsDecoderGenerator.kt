@@ -1,11 +1,12 @@
-package ru.capjack.tool.biser.generator.langs.kotlin
+package ru.capjack.tool.biser.generator.langs.typescript
 
 import ru.capjack.tool.biser.generator.Code
+import ru.capjack.tool.biser.generator.CodeDependency
 import ru.capjack.tool.biser.generator.DependedCode
 import ru.capjack.tool.biser.generator.langs.DefaultReadCallVisitor
 import ru.capjack.tool.biser.generator.model.*
 
-class KotlinDecoderGenerator(
+class TsDecoderGenerator(
 	private val model: Model,
 	private val publicTypes: Set<Type>,
 	private val decoderNames: TypeVisitor<String, DependedCode>,
@@ -15,7 +16,7 @@ class KotlinDecoderGenerator(
 	private val readCalls = DefaultReadCallVisitor(decoderNames)
 	
 	private val dependencyDecoder = model.resolveEntityName("ru.capjack.tool.biser/Decoder")
-	private val dependencyUnknownIdDecoderException = model.resolveEntityName("ru.capjack.tool.biser/UnknownIdDecoderException")
+	private val dependencyUnknownIdDecoderException = CodeDependency(model.resolveEntityName("ru.capjack.tool.biser/_exceptions"), "UnknownIdDecoderException")
 	
 	override fun visitPrimitiveType(type: PrimitiveType, data: Code) {
 	}
@@ -52,12 +53,13 @@ class KotlinDecoderGenerator(
 		val type = model.resolveEntityType(entity.name)
 		val typeName = type.accept(typeNames, data)
 		writeDeclaration(type, data) {
-			identBracketsCurly("when (val id = readInt()) ") {
+			line("const id = r.readInt()")
+			identBracketsCurly("switch (id) ") {
 				entity.values.forEachIndexed { i, v ->
-					line("$i -> $typeName.$v")
+					line("case $i: return $typeName.$v")
 				}
 				data.addDependency(dependencyUnknownIdDecoderException)
-				line("else -> throw UnknownIdDecoderException(id, $typeName::class)")
+				line("default: throw new UnknownIdDecoderException(id, $typeName)")
 			}
 		}
 	}
@@ -74,23 +76,24 @@ class KotlinDecoderGenerator(
 			}
 			
 			writeDeclaration(type, data) {
-				identBracketsCurly("when (val id = readInt()) ") {
+				line("const id = r.readInt()")
+				identBracketsCurly("switch (id) ") {
 					entity.allChildren.forEach { child ->
 						val name = model.resolveEntityType(child.name).accept(decoderNames, this)
 						if (child is ClassEntity && !child.abstract && child.children.isNotEmpty())
-							line("${child.id} -> ${name}_RAW()")
+							line("case ${child.id}: return ${name}_RAW(r)")
 						else
-							line("${child.id} -> $name()")
+							line("case ${child.id}: return $name(r)")
 					}
 					
 					if (!entity.abstract) {
 						val name = type.accept(decoderNames, this)
-						line("${entity.id} -> ${name}_RAW()")
+						line("case ${entity.id}: return ${name}_RAW(r)")
 					}
 					
 					val typeName = type.accept(typeNames, data)
 					data.addDependency(dependencyUnknownIdDecoderException)
-					line("else -> throw UnknownIdDecoderException(id, $typeName::class)")
+					line("default: throw new UnknownIdDecoderException(id, $typeName)")
 				}
 			}
 		}
@@ -104,7 +107,7 @@ class KotlinDecoderGenerator(
 	override fun visitObjectEntity(entity: ObjectEntity, data: Code) {
 		val type = model.resolveEntityType(entity.name)
 		writeDeclaration(type, data) {
-			line(type.accept(typeNames, data))
+			line("return "+type.accept(typeNames, data) + ".INSTANCE")
 		}
 	}
 	
@@ -112,10 +115,10 @@ class KotlinDecoderGenerator(
 	
 	private fun Code.writeClassEntityDecode(entity: ClassEntity, code: Code) {
 		val type = model.resolveEntityType(entity.name)
-		identBracketsRound(type.accept(typeNames, code)) {
+		identBracketsRound("return new " + type.accept(typeNames, code)) {
 			val last = entity.fields.size - 1
 			entity.fields.forEachIndexed { i, field ->
-				line(field.type.accept(readCalls, code) + (if (i == last) "" else ","))
+				line("r." + field.type.accept(readCalls, code) + (if (i == last) "" else ","))
 			}
 		}
 	}
@@ -130,7 +133,7 @@ class KotlinDecoderGenerator(
 			coderName += "_RAW"
 		}
 		
-		val block = code.identBracketsCurly((if (raw || !publicTypes.contains(type)) "private " else "") + "val $coderName: Decoder<$typeName> = ")
+		val block = code.identBracketsCurly((if (raw || !publicTypes.contains(type)) "" else "export ") + "const $coderName: Decoder<$typeName> = r => ")
 		
 		code.line()
 		

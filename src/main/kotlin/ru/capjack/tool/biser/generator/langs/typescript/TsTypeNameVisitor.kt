@@ -1,4 +1,4 @@
-package ru.capjack.tool.biser.generator.langs.kotlin
+package ru.capjack.tool.biser.generator.langs.typescript
 
 import ru.capjack.tool.biser.generator.DependedCode
 import ru.capjack.tool.biser.generator.model.EntityType
@@ -8,30 +8,33 @@ import ru.capjack.tool.biser.generator.model.NullableType
 import ru.capjack.tool.biser.generator.model.PrimitiveType
 import ru.capjack.tool.biser.generator.model.TypeVisitor
 
-class KotlinTypeNameVisitor : TypeVisitor<String, DependedCode> {
+class TsTypeNameVisitor : TypeVisitor<String, DependedCode> {
 	override fun visitPrimitiveType(type: PrimitiveType, data: DependedCode): String {
 		return when (type) {
-			PrimitiveType.BOOLEAN       -> "Boolean"
-			PrimitiveType.BYTE          -> "Byte"
-			PrimitiveType.INT           -> "Int"
-			PrimitiveType.LONG          -> "Long"
-			PrimitiveType.DOUBLE        -> "Double"
-			PrimitiveType.STRING        -> "String"
-			PrimitiveType.BOOLEAN_ARRAY -> "BooleanArray"
-			PrimitiveType.BYTE_ARRAY    -> "ByteArray"
-			PrimitiveType.INT_ARRAY     -> "IntArray"
-			PrimitiveType.LONG_ARRAY    -> "LongArray"
-			PrimitiveType.DOUBLE_ARRAY  -> "DoubleArray"
+			PrimitiveType.BOOLEAN       -> "boolean"
+			PrimitiveType.BYTE          -> "number"
+			PrimitiveType.INT           -> "number"
+			PrimitiveType.LONG          -> {
+				data.addDependency("ru.capjack.tool.lang/Long")
+				"Long"
+			}
+			PrimitiveType.DOUBLE        -> "number"
+			PrimitiveType.STRING        -> "string"
+			PrimitiveType.BOOLEAN_ARRAY -> "boolean[]"
+			PrimitiveType.BYTE_ARRAY    -> "Int8Array"
+			PrimitiveType.INT_ARRAY     -> "number[]"
+			PrimitiveType.LONG_ARRAY    -> "Long[]"
+			PrimitiveType.DOUBLE_ARRAY  -> "number[]"
 		}
 	}
 	
 	override fun visitEntityType(type: EntityType, data: DependedCode): String {
 		data.addDependency(type.name)
-		return type.name.internal.joinToString(".")
+		return type.name.internal.joinToString("_")
 	}
 	
 	override fun visitListType(type: ListType, data: DependedCode): String {
-		return "List<${type.element.accept(this, data)}>"
+		return "${type.element.accept(this, data)}[]"
 	}
 	
 	override fun visitMapType(type: MapType, data: DependedCode): String {
@@ -39,7 +42,7 @@ class KotlinTypeNameVisitor : TypeVisitor<String, DependedCode> {
 	}
 	
 	override fun visitNullableType(type: NullableType, data: DependedCode): String {
-		return type.original.accept(this, data) + '?'
+		return type.original.accept(this, data) + " | null"
 	}
 	
 }
