@@ -14,6 +14,7 @@ entities:
     fields:
     - name: "v"
       type: "INT"
+      readonly: true
   - id: 6
     name: "biser.stub/StubB"
     parent: null
@@ -22,6 +23,7 @@ entities:
     fields:
     - name: "v"
       type: "STRING"
+      readonly: true
   - id: 10
     name: "biser.stub/StubC"
     parent: null
@@ -36,6 +38,7 @@ entities:
     fields:
     - name: "v"
       type: "STRING"
+      readonly: true
   - id: 16
     name: "biser.stub/StubM"
     parent: null
@@ -44,110 +47,163 @@ entities:
     fields:
     - name: "vSealed"
       type: "biser.stub/StubC.Sealed"
+      readonly: true
     - name: "vBoolean"
       type: "BOOLEAN"
+      readonly: true
     - name: "vByte"
       type: "BYTE"
+      readonly: true
     - name: "vInt"
       type: "INT"
+      readonly: true
     - name: "vLong"
       type: "LONG"
+      readonly: true
     - name: "vDouble"
       type: "DOUBLE"
+      readonly: true
     - name: "vBooleanArray"
       type: "BOOLEAN_ARRAY"
+      readonly: true
     - name: "vByteArray"
       type: "BYTE_ARRAY"
+      readonly: true
     - name: "vIntArray"
       type: "INT_ARRAY"
+      readonly: true
     - name: "vLongArray"
       type: "LONG_ARRAY"
+      readonly: true
     - name: "vDoubleArray"
       type: "DOUBLE_ARRAY"
+      readonly: true
     - name: "vString"
       type: "STRING"
+      readonly: true
     - name: "vStubA"
       type: "biser.stub/StubA"
+      readonly: true
     - name: "vStubA1"
       type: "biser.stub/StubA1"
+      readonly: true
     - name: "vStubA2"
       type: "biser.stub/StubA2"
+      readonly: true
     - name: "vStubANullable"
       type: "biser.stub/StubA?"
+      readonly: true
     - name: "vStubA1Nullable"
       type: "biser.stub/StubA1?"
+      readonly: true
     - name: "vStubA2Nullable"
       type: "biser.stub/StubA2?"
+      readonly: true
     - name: "vStubB"
       type: "biser.stub/StubB"
+      readonly: true
     - name: "vStubB1"
       type: "biser.stub/StubB1"
+      readonly: true
     - name: "vStubB2"
       type: "biser.stub/StubB2"
+      readonly: true
     - name: "vStubBNullable"
       type: "biser.stub/StubB?"
+      readonly: true
     - name: "vStubB1Nullable"
       type: "biser.stub/StubB1?"
+      readonly: true
     - name: "vStubB2Nullable"
       type: "biser.stub/StubB2?"
+      readonly: true
     - name: "vStubE"
       type: "biser.stub/StubE"
+      readonly: true
     - name: "lBoolean"
       type: "List<BOOLEAN>"
+      readonly: true
     - name: "lByte"
       type: "List<BYTE>"
+      readonly: true
     - name: "lInt"
       type: "List<INT>"
+      readonly: true
     - name: "lLong"
       type: "List<LONG>"
+      readonly: true
     - name: "lDouble"
       type: "List<DOUBLE>"
+      readonly: true
     - name: "lBooleanArray"
       type: "List<BOOLEAN_ARRAY>"
+      readonly: true
     - name: "lByteArray"
       type: "List<BYTE_ARRAY>"
+      readonly: true
     - name: "lIntArray"
       type: "List<INT_ARRAY>"
+      readonly: true
     - name: "lLongArray"
       type: "List<LONG_ARRAY>"
+      readonly: true
     - name: "lDoubleArray"
       type: "List<DOUBLE_ARRAY>"
+      readonly: true
     - name: "lString"
       type: "List<STRING>"
+      readonly: true
     - name: "lStubA"
       type: "List<biser.stub/StubA>"
+      readonly: true
     - name: "lStubB"
       type: "List<biser.stub/StubB>"
+      readonly: true
     - name: "lStubE"
       type: "List<biser.stub/StubE>"
+      readonly: true
     - name: "llBoolean"
       type: "List<List<BOOLEAN>>"
+      readonly: true
     - name: "llByte"
       type: "List<List<BYTE>>"
+      readonly: true
     - name: "llInt"
       type: "List<List<INT>>"
+      readonly: true
     - name: "llLong"
       type: "List<List<LONG>>"
+      readonly: true
     - name: "llDouble"
       type: "List<List<DOUBLE>>"
+      readonly: true
     - name: "llBooleanArray"
       type: "List<List<BOOLEAN_ARRAY>>"
+      readonly: true
     - name: "llByteArray"
       type: "List<List<BYTE_ARRAY>>"
+      readonly: true
     - name: "llIntArray"
       type: "List<List<INT_ARRAY>>"
+      readonly: true
     - name: "llLongArray"
       type: "List<List<LONG_ARRAY>>"
+      readonly: true
     - name: "llDoubleArray"
       type: "List<List<DOUBLE_ARRAY>>"
+      readonly: true
     - name: "llString"
       type: "List<List<STRING>>"
+      readonly: true
     - name: "llStubA"
       type: "List<List<biser.stub/StubA>>"
+      readonly: true
     - name: "llStubB"
       type: "List<List<biser.stub/StubB>>"
+      readonly: true
     - name: "llStubE"
       type: "List<List<biser.stub/StubE>>"
+      readonly: true
   - id: 3
     name: "biser.stub/StubA1"
     parent: "biser.stub/StubA"
@@ -156,8 +212,10 @@ entities:
     fields:
     - name: "v"
       type: "INT"
+      readonly: true
     - name: "s"
       type: "LONG"
+      readonly: true
   - id: 4
     name: "biser.stub/StubA2"
     parent: "biser.stub/StubA"
@@ -166,8 +224,10 @@ entities:
     fields:
     - name: "v"
       type: "INT"
+      readonly: true
     - name: "s"
       type: "STRING"
+      readonly: true
   - id: 7
     name: "biser.stub/StubB1"
     parent: "biser.stub/StubB"
@@ -176,8 +236,10 @@ entities:
     fields:
     - name: "v"
       type: "STRING"
+      readonly: true
     - name: "s"
       type: "BOOLEAN"
+      readonly: true
   - id: 8
     name: "biser.stub/StubB2"
     parent: "biser.stub/StubB"
@@ -186,8 +248,10 @@ entities:
     fields:
     - name: "v"
       type: "STRING"
+      readonly: true
     - name: "s"
       type: "BYTE"
+      readonly: true
   - id: 5
     name: "biser.stub/StubA2s"
     parent: "biser.stub/StubA2"
@@ -196,8 +260,10 @@ entities:
     fields:
     - name: "v"
       type: "INT"
+      readonly: true
     - name: "s"
       type: "STRING"
+      readonly: true
   - id: 12
     name: "biser.stub/StubC.Sealed.A"
     parent: "biser.stub/StubC.Sealed"
@@ -206,6 +272,7 @@ entities:
     fields:
     - name: "v"
       type: "STRING"
+      readonly: true
   - id: 9
     name: "biser.stub/StubB2s"
     parent: "biser.stub/StubB2"
@@ -214,8 +281,10 @@ entities:
     fields:
     - name: "v"
       type: "STRING"
+      readonly: true
     - name: "s"
       type: "BYTE"
+      readonly: true
   objects:
   - id: 13
     name: "biser.stub/StubC.Sealed.B"
