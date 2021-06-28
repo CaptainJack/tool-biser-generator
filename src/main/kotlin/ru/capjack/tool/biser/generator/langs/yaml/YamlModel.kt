@@ -26,7 +26,8 @@ open class YamlModel {
 		) {
 			class Field(
 				val name: String,
-				val type: String
+				val type: String,
+				val readonly: Boolean
 			)
 		}
 		

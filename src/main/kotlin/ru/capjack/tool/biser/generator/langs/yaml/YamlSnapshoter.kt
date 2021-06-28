@@ -62,7 +62,7 @@ open class YamlSnapshoter<Y : YamlModel, M : Model>(private val ymClass: KClass<
 					entity.abstract,
 					entity.sealed,
 					entity.fields.map {
-						YamlModel.Entities.ClassEntity.Field(it.name, it.type.toString())
+						YamlModel.Entities.ClassEntity.Field(it.name, it.type.toString(), it.readonly)
 					}
 				))
 			}
@@ -97,7 +97,8 @@ open class YamlSnapshoter<Y : YamlModel, M : Model>(private val ymClass: KClass<
 				e.fields.map {
 					ClassEntity.Field(
 						it.name,
-						model.resolveType(it.type)
+						model.resolveType(it.type),
+						it.readonly
 					)
 				},
 				e.abstract,

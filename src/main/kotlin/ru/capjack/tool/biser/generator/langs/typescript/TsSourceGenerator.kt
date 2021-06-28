@@ -38,7 +38,7 @@ class TsSourceGenerator(
 				ident {
 					entity.fields.forEach {
 						line {
-							if (entity.isFieldOwner(it.name)) append("readonly ")
+							if (entity.isFieldOwner(it.name)) append(if (it.readonly) "readonly " else "public ")
 							append(it.name).append(": ").append(it.type.accept(typeNames, data)).append(",")
 						}
 					}

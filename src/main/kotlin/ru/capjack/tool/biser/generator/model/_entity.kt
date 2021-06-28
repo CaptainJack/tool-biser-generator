@@ -43,7 +43,8 @@ interface ClassEntity : InheritedEntity {
 	
 	data class Field(
 		val name: String,
-		val type: Type
+		val type: Type,
+		val readonly: Boolean
 	)
 }
 

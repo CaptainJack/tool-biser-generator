@@ -5,7 +5,9 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
 import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.descriptors.containingPackage
+import org.jetbrains.kotlin.descriptors.impl.referencedProperty
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperClassNotAny
 import org.jetbrains.kotlin.types.KotlinType
@@ -16,7 +18,9 @@ import org.jetbrains.kotlin.types.typeUtil.isEnum
 import org.jetbrains.kotlin.types.typeUtil.isInt
 import org.jetbrains.kotlin.types.typeUtil.isInterface
 import org.jetbrains.kotlin.types.typeUtil.isLong
+import org.jetbrains.kotlin.utils.addToStdlib.cast
 import ru.capjack.tool.biser.generator.model.ClassEntity
+import ru.capjack.tool.biser.generator.model.Entity
 import ru.capjack.tool.biser.generator.model.EntityName
 import ru.capjack.tool.biser.generator.model.EnumEntity
 import ru.capjack.tool.biser.generator.model.Model
@@ -30,6 +34,8 @@ open class KotlinLoader<M : Model>(
 	protected val source: KotlinSource,
 	protected val model: M,
 ) {
+	private val loadedDescriptors = hashMapOf<ClassDescriptor, Entity>()
+	
 	open fun load(filter: Predicate<ClassDescriptor>) {
 		source.classDescriptors.forEach {
 			if (filter.test(it)) processClassDescriptor(it)
@@ -46,37 +52,52 @@ open class KotlinLoader<M : Model>(
 	}
 	
 	private fun loadClassEntity(descriptor: ClassDescriptor): ClassEntity {
-		val name = resolveName(descriptor)
-		val parent = descriptor.getSuperClassNotAny()?.let(::resolveClassEntity)
-		val constructor = requireNotNull(descriptor.unsubstitutedPrimaryConstructor)
-		val fields = constructor.valueParameters.map { ClassEntity.Field(it.name.identifier, resolveType(it.type)) }
-		
-		return model.provideClassEntity(
-			name,
-			parent?.name,
-			fields,
-			descriptor.modality == Modality.ABSTRACT || descriptor.modality == Modality.SEALED,
-			descriptor.modality == Modality.SEALED
-		)
+		return loadedDescriptors.getOrPut(descriptor) {
+			val name = resolveName(descriptor)
+			val parent = descriptor.getSuperClassNotAny()?.let(::resolveClassEntity)
+			val constructor = requireNotNull(descriptor.unsubstitutedPrimaryConstructor)
+			
+			val varProperties = descriptor.unsubstitutedMemberScope.getContributedDescriptors().asSequence()
+				.filterIsInstance<PropertyDescriptor>()
+				.filter { it.isVar }
+				.map { it.name.identifier }
+				.toHashSet()
+			
+			val fields = constructor.valueParameters.map {
+				ClassEntity.Field(it.name.identifier, resolveType(it.type), !varProperties.contains(it.name.identifier))
+			}
+			
+			model.provideClassEntity(
+				name,
+				parent?.name,
+				fields,
+				descriptor.modality == Modality.ABSTRACT || descriptor.modality == Modality.SEALED,
+				descriptor.modality == Modality.SEALED
+			)
+		}.cast()
 	}
 	
 	private fun loadObjectEntity(descriptor: ClassDescriptor): ObjectEntity {
-		val name = resolveName(descriptor)
-		val parent = descriptor.getSuperClassNotAny()?.let(::resolveClassEntity)
-		
-		return model.provideObjectEntity(name, parent?.name)
+		return loadedDescriptors.getOrPut(descriptor) {
+			val name = resolveName(descriptor)
+			val parent = descriptor.getSuperClassNotAny()?.let(::resolveClassEntity)
+			
+			model.provideObjectEntity(name, parent?.name)
+		}.cast()
 	}
 	
 	private fun loadEnumEntity(descriptor: ClassDescriptor): EnumEntity {
-		val name = resolveName(descriptor)
-		val values = descriptor.unsubstitutedMemberScope.getContributedDescriptors()
-			.asSequence()
-			.filterIsInstance<ClassDescriptor>()
-			.filter { it.kind == ClassKind.ENUM_ENTRY }
-			.map { it.name.toString() }
-			.toList()
-		
-		return model.provideEnumEntity(name, values)
+		return loadedDescriptors.getOrPut(descriptor) {
+			val name = resolveName(descriptor)
+			val values = descriptor.unsubstitutedMemberScope.getContributedDescriptors()
+				.asSequence()
+				.filterIsInstance<ClassDescriptor>()
+				.filter { it.kind == ClassKind.ENUM_ENTRY }
+				.map { it.name.toString() }
+				.toList()
+			
+			model.provideEnumEntity(name, values)
+		}.cast()
 	}
 	
 	protected fun resolveName(descriptor: ClassifierDescriptor): EntityName {
