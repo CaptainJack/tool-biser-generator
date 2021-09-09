@@ -1,5 +1,5 @@
 plugins {
-	kotlin("jvm") version "1.5.10"
+	kotlin("jvm") version "1.5.30"
 	id("ru.capjack.publisher") version "1.0.0"
 }
 
@@ -19,11 +19,11 @@ dependencies {
 	implementation(kotlin("compiler-embeddable"))
 	implementation("ru.capjack.tool:tool-logging:1.5.0")
 	implementation("ru.capjack.tool:tool-lang:1.11.1")
-	implementation("ru.capjack.tool:tool-utils:1.6.1")
-	implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.12.3")
-	implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.12.3")
+	implementation("ru.capjack.tool:tool-utils:1.7.0")
+	implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.12.5")
+	implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.12.5")
 	
 	testImplementation(kotlin("test"))
-	testImplementation("ch.qos.logback:logback-classic:1.2.3")
-	testImplementation("ru.capjack.tool:tool-biser:1.0.0")
+	testImplementation("ch.qos.logback:logback-classic:1.2.5")
+	testImplementation("ru.capjack.tool:tool-biser:1.1.0")
 }
