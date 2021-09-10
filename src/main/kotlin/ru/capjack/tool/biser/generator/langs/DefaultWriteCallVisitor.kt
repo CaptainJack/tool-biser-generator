@@ -43,7 +43,7 @@ class DefaultWriteCallVisitor(private val encoderNaming: TypeVisitor<String, Dep
 		if (type.original == PrimitiveType.STRING) {
 			return "writeStringNullable(${data.value})"
 		}
-		return "write(${data.value}, ${type.original.accept(encoderNaming, data.code)})"
+		return "write(${data.value}, ${type.accept(encoderNaming, data.code)})"
 	}
 	
 	fun visit(type: Type, code: DependedCode, value: String): String {

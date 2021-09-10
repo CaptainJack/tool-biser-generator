@@ -42,7 +42,11 @@ class KotlinDecoderGenerator(
 			return
 		}
 		writeDeclaration(type, data) {
-			line(type.original.accept(readCalls, data))
+			line {
+				append("if (readBoolean()) ")
+				append(type.original.accept(readCalls, data))
+				append(" else null")
+			}
 		}
 	}
 	

@@ -43,7 +43,11 @@ class TsDecoderGenerator(
 			return
 		}
 		writeDeclaration(type, data) {
-			line(type.original.accept(readCalls, data))
+			line {
+				append("return r.readBoolean() ? r.")
+				append(type.original.accept(readCalls, data))
+				append(" : null;")
+			}
 		}
 	}
 	

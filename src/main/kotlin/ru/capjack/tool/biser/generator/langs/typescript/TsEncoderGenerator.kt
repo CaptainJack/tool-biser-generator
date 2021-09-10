@@ -44,9 +44,9 @@ class TsEncoderGenerator(
 		}
 		
 		writeDeclaration(type, data) {
-			identBracketsCurly("if (v == null) writeInt(0) else ") {
-				line("writeInt(1)")
-				line(writeCalls.visit(type.original, data, "v"))
+			identBracketsCurly("if (v === null) w.writeBoolean(false); else ") {
+				line("w.writeBoolean(true)")
+				line("w." + writeCalls.visit(type.original, data, "v"))
 			}
 		}
 	}

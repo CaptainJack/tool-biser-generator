@@ -43,8 +43,8 @@ class KotlinEncoderGenerator(
 		}
 		
 		writeDeclaration(type, data) {
-			identBracketsCurly("if (it == null) writeInt(0) else ") {
-				line("writeInt(1)")
+			identBracketsCurly("if (it == null) writeBoolean(false) else ") {
+				line("writeBoolean(true)")
 				line(writeCalls.visit(type.original, data, "it"))
 			}
 		}
