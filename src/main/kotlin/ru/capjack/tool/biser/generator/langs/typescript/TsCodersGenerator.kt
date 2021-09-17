@@ -51,8 +51,9 @@ class TsCodersGenerator(
 		return TsDecoderGenerator(model, decoders, decoderNames, typeNames)
 	}
 	
-	override fun generate(targetSourceDir: Path) {
-		super.generate(targetSourceDir)
+	override fun generate(targetSourceDir: Path): Collection<Path> {
+		val generatedFiles = super.generate(targetSourceDir).toMutableSet()
+		
 		if (generateSources) {
 			
 			val entities = mutableSetOf<Entity>()
@@ -104,12 +105,14 @@ class TsCodersGenerator(
 			entities.forEach {
 				val codeFile = TsCodeFile(it.name)
 				it.accept(generator, codeFile.body)
-				codeFile.save(targetSourceDir)
+				generatedFiles.add(codeFile.save(targetSourceDir))
 			}
 		}
+		
+		return generatedFiles
 	}
 	
-	override fun generate(targetSourceDir: Path, targetEntityName: EntityName, types: Set<Type>, generator: TypeVisitor<Unit, Code>) {
+	override fun generate(targetSourceDir: Path, targetEntityName: EntityName, types: Set<Type>, generator: TypeVisitor<Unit, Code>, generatedFiles: MutableSet<Path>) {
 		if (types.isEmpty()) {
 			return
 		}
@@ -125,7 +128,7 @@ class TsCodersGenerator(
 		
 		allTypes.forEach { it.accept(generator, code) }
 		
-		codeFile.save(targetSourceDir)
+		generatedFiles.add(codeFile.save(targetSourceDir))
 	}
 	
 	///

@@ -83,7 +83,8 @@ abstract class DefaultCodersGenerator(
 		decoders.add(type)
 	}
 	
-	open fun generate(targetSourceDir: Path) {
+	open fun generate(targetSourceDir: Path): Collection<Path> {
+		val generatedFiles = mutableSetOf<Path>()
 		
 		val encoderNames = DefaultCoderNameVisitor(createInnerCoderNameScopeVisitor(biserEncodersName))
 		val decoderNames = DefaultCoderNameVisitor(createInnerCoderNameScopeVisitor(biserDecodersName))
@@ -92,15 +93,19 @@ abstract class DefaultCodersGenerator(
 			targetSourceDir,
 			generatedEncodersName,
 			encoders,
-			createEncoderGenerator(model, encoders, encoderNames, typeNames)
+			createEncoderGenerator(model, encoders, encoderNames, typeNames),
+			generatedFiles
 		)
 		
 		generate(
 			targetSourceDir,
 			generatedDecodersName,
 			decoders,
-			createDecoderGenerator(model, decoders, decoderNames, typeNames)
+			createDecoderGenerator(model, decoders, decoderNames, typeNames),
+			generatedFiles
 		)
+		
+		return generatedFiles
 	}
 	
 	protected abstract fun createOuterCoderNameScopeVisitor(biserCodersName: EntityName, generatedCodersName: EntityName): CoderNameScopeVisitor
@@ -121,7 +126,7 @@ abstract class DefaultCodersGenerator(
 		typeNames: TypeVisitor<String, DependedCode>
 	): TypeVisitor<Unit, Code>
 	
-	protected abstract fun generate(targetSourceDir: Path, targetEntityName: EntityName, types: Set<Type>, generator: TypeVisitor<Unit, Code>)
+	protected abstract fun generate(targetSourceDir: Path, targetEntityName: EntityName, types: Set<Type>, generator: TypeVisitor<Unit, Code>, generatedFiles: MutableSet<Path>)
 }
 
 

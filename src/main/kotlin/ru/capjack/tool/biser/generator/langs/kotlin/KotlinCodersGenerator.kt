@@ -54,7 +54,7 @@ class KotlinCodersGenerator(
 		return KotlinDecoderGenerator(model, decoders, decoderNames, typeNames)
 	}
 	
-	override fun generate(targetSourceDir: Path, targetEntityName: EntityName, types: Set<Type>, generator: TypeVisitor<Unit, Code>) {
+	override fun generate(targetSourceDir: Path, targetEntityName: EntityName, types: Set<Type>, generator: TypeVisitor<Unit, Code>, generatedFiles: MutableSet<Path>) {
 		if (types.isEmpty()) {
 			return
 		}
@@ -68,7 +68,7 @@ class KotlinCodersGenerator(
 		
 		allTypes.forEach { it.accept(generator, code) }
 		
-		codeFile.save(targetSourceDir)
+		generatedFiles.add(codeFile.save(targetSourceDir))
 	}
 	
 	///
