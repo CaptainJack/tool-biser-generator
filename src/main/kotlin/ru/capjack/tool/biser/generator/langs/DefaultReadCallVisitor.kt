@@ -42,7 +42,7 @@ open class DefaultReadCallVisitor(protected val encoderNaming: TypeVisitor<Strin
 		if (type.original == PrimitiveType.STRING) {
 			return "readStringNullable()"
 		}
-		return "read(${type.original.accept(encoderNaming, data)})"
+		return "read(${type.accept(encoderNaming, data)})"
 	}
 	
 }
