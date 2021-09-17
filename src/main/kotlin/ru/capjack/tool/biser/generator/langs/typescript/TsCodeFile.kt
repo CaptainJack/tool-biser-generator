@@ -6,10 +6,9 @@ import java.nio.file.Path
 
 class TsCodeFile(private val name: EntityName) : CodeFile(name.nameSpace) {
 	
-	override fun save(path: Path) {
-		
+	override fun save(path: Path): Path {
 		val filePath = path.resolve((name.external + name.internal.joinToString("_")).joinToString("/") + ".ts")
-		super.save(filePath)
+		return super.save(filePath)
 	}
 	
 	override fun writeHeader(builder: StringBuilder) {

@@ -28,13 +28,15 @@ abstract class CodeFile(private val nameSpace: NameSpace) : DependedCode {
 		addDependency(CodeDependency(nameSpace.resolveEntityName(name), *aliases))
 	}
 	
-	open fun save(path: Path) {
+	open fun save(path: Path): Path {
 		val builder = StringBuilder()
 		writeHeader(builder)
 		writeBody(builder)
 		
 		path.parent.createDirectories()
 		path.writeText(builder.toString())
+		
+		return path
 	}
 	
 	protected open fun writeHeader(builder: StringBuilder) {

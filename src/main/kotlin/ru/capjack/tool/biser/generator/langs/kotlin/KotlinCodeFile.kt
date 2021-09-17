@@ -6,9 +6,9 @@ import java.nio.file.Path
 
 class KotlinCodeFile(private val name: EntityName) : CodeFile(name.nameSpace) {
 	
-	override fun save(path: Path) {
+	override fun save(path: Path): Path {
 		val filePath = path.resolve(name.path.joinToString("/") + ".kt")
-		super.save(filePath)
+		return super.save(filePath)
 	}
 	
 	override fun writeHeader(builder: StringBuilder) {
