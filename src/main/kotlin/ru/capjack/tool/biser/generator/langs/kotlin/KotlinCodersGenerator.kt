@@ -5,7 +5,7 @@ import ru.capjack.tool.biser.generator.CodersTypeAggregator
 import ru.capjack.tool.biser.generator.Code
 import ru.capjack.tool.biser.generator.DependedCode
 import ru.capjack.tool.biser.generator.langs.DefaultCoderNameVisitor
-import ru.capjack.tool.biser.generator.langs.DefaultCodersGenerator
+import ru.capjack.tool.biser.generator.langs.AbstractCodersGenerator
 import ru.capjack.tool.biser.generator.model.EntityName
 import ru.capjack.tool.biser.generator.model.Model
 import ru.capjack.tool.biser.generator.model.Type
@@ -18,7 +18,7 @@ class KotlinCodersGenerator(
 	encodersName: String? = null,
 	decodersName: String? = null,
 	private val internal: Boolean = false,
-) : DefaultCodersGenerator(
+) : AbstractCodersGenerator<KotlinCodeSource>(
 	model,
 	targetPackage,
 	encodersName,
@@ -54,7 +54,7 @@ class KotlinCodersGenerator(
 		return KotlinDecoderGenerator(model, decoders, decoderNames, typeNames)
 	}
 	
-	override fun generate(targetSourceDir: Path, targetEntityName: EntityName, types: Set<Type>, generator: TypeVisitor<Unit, Code>, generatedFiles: MutableSet<Path>) {
+	override fun generate(source: KotlinCodeSource, targetEntityName: EntityName, types: Set<Type>, generator: TypeVisitor<Unit, Code>) {
 		if (types.isEmpty()) {
 			return
 		}
@@ -63,12 +63,10 @@ class KotlinCodersGenerator(
 		val aggregator = CodersTypeAggregator(model)
 		types.forEach { it.accept(aggregator, allTypes) }
 		
-		val codeFile = KotlinCodeFile(targetEntityName)
+		val codeFile = source.newFile(targetEntityName)
 		val code = codeFile.body.identBracketsCurly((if (internal) "internal " else "") + "object " + targetEntityName.self + " ")
 		
 		allTypes.forEach { it.accept(generator, code) }
-		
-		generatedFiles.add(codeFile.save(targetSourceDir))
 	}
 	
 	///

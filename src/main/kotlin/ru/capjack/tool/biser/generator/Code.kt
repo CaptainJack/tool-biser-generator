@@ -8,30 +8,29 @@ import java.util.*
 import kotlin.io.path.createDirectories
 import kotlin.io.path.writeText
 
-@Suppress("LeakingThis")
-abstract class CodeFile(private val nameSpace: NameSpace) : DependedCode {
-	protected val dependencies = mutableKeyedSetOf(CodeDependency::name)
-	val header = Code(0, this)
-	val body = Code(0, this)
+abstract class CodeSource {
 	
-	override fun addDependency(dependency: CodeDependency) {
-		val d = dependencies[dependency.name]
-		if (d == null) {
-			dependencies.add(dependency)
-		}
-		else {
-			d.aliases.addAll(dependency.aliases)
-		}
+	private val entityFiles = mutableKeyedSetOf(EntityCodeFile::name)
+	
+	fun newFile(name: EntityName): CodeFile {
+		require(!entityFiles.containsKey(name))
+		val file = EntityCodeFile(name)
+		entityFiles.add(file)
+		return file
 	}
 	
-	override fun addDependency(name: String, vararg aliases: String) {
-		addDependency(CodeDependency(nameSpace.resolveEntityName(name), *aliases))
+	fun saveNewFiles(): Collection<Path> {
+		val list = entityFiles.map(::saveEntityFile)
+		entityFiles.clear()
+		return list
 	}
 	
-	open fun save(path: Path): Path {
+	private fun saveEntityFile(file: EntityCodeFile): Path {
+		val path = defineEntityFilePath(file.name)
 		val builder = StringBuilder()
-		writeHeader(builder)
-		writeBody(builder)
+		
+		writeEntityFileHeader(path, file, builder)
+		writeEntityFileBody(path, file, builder)
 		
 		path.parent.createDirectories()
 		path.writeText(builder.toString())
@@ -39,12 +38,41 @@ abstract class CodeFile(private val nameSpace: NameSpace) : DependedCode {
 		return path
 	}
 	
-	protected open fun writeHeader(builder: StringBuilder) {
-		header.write(builder)
+	protected abstract fun defineEntityFilePath(name: EntityName): Path
+	
+	protected open fun writeEntityFileHeader(path: Path, file: EntityCodeFile, builder: StringBuilder) {
+		file.header.write(builder)
 	}
 	
-	protected open fun writeBody(builder: StringBuilder) {
-		body.write(builder)
+	protected open fun writeEntityFileBody(path: Path, file: EntityCodeFile, builder: StringBuilder) {
+		file.body.write(builder)
+	}
+}
+
+class EntityCodeFile(val name: EntityName) : CodeFile(name.nameSpace) {
+}
+
+abstract class CodeFile(private val nameSpace: NameSpace) : DependedCode {
+	private val _dependencies = mutableKeyedSetOf(CodeDependency::name)
+	
+	val header = Code(0, this)
+	val body = Code(0, this)
+	
+	val dependencies: Collection<CodeDependency>
+		get() = _dependencies
+	
+	
+	override fun addDependency(dependency: CodeDependency) {
+		val d = _dependencies[dependency.name]
+		if (d == null) {
+			_dependencies.add(dependency)
+		} else {
+			d.aliases.addAll(dependency.aliases)
+		}
+	}
+	
+	override fun addDependency(name: String, vararg aliases: String) {
+		addDependency(CodeDependency(nameSpace.resolveEntityName(name), *aliases))
 	}
 }
 

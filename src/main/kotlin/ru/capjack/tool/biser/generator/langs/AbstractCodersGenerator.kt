@@ -4,6 +4,7 @@ package ru.capjack.tool.biser.generator.langs
 
 import ru.capjack.tool.biser.generator.CoderNameScopeVisitor
 import ru.capjack.tool.biser.generator.Code
+import ru.capjack.tool.biser.generator.CodeSource
 import ru.capjack.tool.biser.generator.DependedCode
 import ru.capjack.tool.biser.generator.model.EntityName
 import ru.capjack.tool.biser.generator.model.EntityType
@@ -14,9 +15,8 @@ import ru.capjack.tool.biser.generator.model.NullableType
 import ru.capjack.tool.biser.generator.model.PrimitiveType
 import ru.capjack.tool.biser.generator.model.Type
 import ru.capjack.tool.biser.generator.model.TypeVisitor
-import java.nio.file.Path
 
-abstract class DefaultCodersGenerator(
+abstract class AbstractCodersGenerator<C: CodeSource>(
 	protected val model: Model,
 	targetPackage: String,
 	encodersName: String? = null,
@@ -83,29 +83,23 @@ abstract class DefaultCodersGenerator(
 		decoders.add(type)
 	}
 	
-	open fun generate(targetSourceDir: Path): Collection<Path> {
-		val generatedFiles = mutableSetOf<Path>()
-		
+	open fun generate(source: C) {
 		val encoderNames = DefaultCoderNameVisitor(createInnerCoderNameScopeVisitor(biserEncodersName))
 		val decoderNames = DefaultCoderNameVisitor(createInnerCoderNameScopeVisitor(biserDecodersName))
 		
 		generate(
-			targetSourceDir,
+			source,
 			generatedEncodersName,
 			encoders,
-			createEncoderGenerator(model, encoders, encoderNames, typeNames),
-			generatedFiles
+			createEncoderGenerator(model, encoders, encoderNames, typeNames)
 		)
 		
 		generate(
-			targetSourceDir,
+			source,
 			generatedDecodersName,
 			decoders,
-			createDecoderGenerator(model, decoders, decoderNames, typeNames),
-			generatedFiles
+			createDecoderGenerator(model, decoders, decoderNames, typeNames)
 		)
-		
-		return generatedFiles
 	}
 	
 	protected abstract fun createOuterCoderNameScopeVisitor(biserCodersName: EntityName, generatedCodersName: EntityName): CoderNameScopeVisitor
@@ -126,7 +120,7 @@ abstract class DefaultCodersGenerator(
 		typeNames: TypeVisitor<String, DependedCode>
 	): TypeVisitor<Unit, Code>
 	
-	protected abstract fun generate(targetSourceDir: Path, targetEntityName: EntityName, types: Set<Type>, generator: TypeVisitor<Unit, Code>, generatedFiles: MutableSet<Path>)
+	protected abstract fun generate(source: C, targetEntityName: EntityName, types: Set<Type>, generator: TypeVisitor<Unit, Code>)
 }
 
 

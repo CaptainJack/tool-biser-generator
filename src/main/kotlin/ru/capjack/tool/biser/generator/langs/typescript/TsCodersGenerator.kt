@@ -5,9 +5,8 @@ import ru.capjack.tool.biser.generator.CoderNameScopeVisitor
 import ru.capjack.tool.biser.generator.CodersTypeAggregator
 import ru.capjack.tool.biser.generator.DependedCode
 import ru.capjack.tool.biser.generator.langs.DefaultCoderNameVisitor
-import ru.capjack.tool.biser.generator.langs.DefaultCodersGenerator
+import ru.capjack.tool.biser.generator.langs.AbstractCodersGenerator
 import ru.capjack.tool.biser.generator.model.*
-import java.nio.file.Path
 
 class TsCodersGenerator(
 	model: Model,
@@ -15,7 +14,7 @@ class TsCodersGenerator(
 	encodersName: String? = null,
 	decodersName: String? = null,
 	private val generateSources: Boolean = true
-) : DefaultCodersGenerator(
+) : AbstractCodersGenerator<SeparatedTsCodeSource>(
 	model,
 	targetPackage,
 	encodersName,
@@ -51,9 +50,7 @@ class TsCodersGenerator(
 		return TsDecoderGenerator(model, decoders, decoderNames, typeNames)
 	}
 	
-	override fun generate(targetSourceDir: Path): Collection<Path> {
-		val generatedFiles = super.generate(targetSourceDir).toMutableSet()
-		
+	override fun generate(source: SeparatedTsCodeSource) {
 		if (generateSources) {
 			
 			val entities = mutableSetOf<Entity>()
@@ -103,16 +100,13 @@ class TsCodersGenerator(
 			val generator = TsSourceGenerator(typeNames)
 			
 			entities.forEach {
-				val codeFile = TsCodeFile(it.name)
-				it.accept(generator, codeFile.body)
-				generatedFiles.add(codeFile.save(targetSourceDir))
+				val file = source.newFile(it.name)
+				it.accept(generator, file.body)
 			}
 		}
-		
-		return generatedFiles
 	}
 	
-	override fun generate(targetSourceDir: Path, targetEntityName: EntityName, types: Set<Type>, generator: TypeVisitor<Unit, Code>, generatedFiles: MutableSet<Path>) {
+	override fun generate(source: SeparatedTsCodeSource, targetEntityName: EntityName, types: Set<Type>, generator: TypeVisitor<Unit, Code>) {
 		if (types.isEmpty()) {
 			return
 		}
@@ -121,14 +115,12 @@ class TsCodersGenerator(
 		val aggregator = CodersTypeAggregator(model)
 		types.forEach { it.accept(aggregator, allTypes) }
 		
-		val codeFile = TsCodeFile(targetEntityName)
-		codeFile.header.line("// noinspection DuplicatedCode,JSUnusedLocalSymbols")
-		codeFile.header.line()
-		val code = codeFile.body.identBracketsCurly("export namespace " + targetEntityName.self + " ")
+		val file = source.newFile(targetEntityName)
+		file.header.line("// noinspection DuplicatedCode,JSUnusedLocalSymbols")
+		file.header.line()
+		val code = file.body.identBracketsCurly("export namespace " + targetEntityName.self + " ")
 		
 		allTypes.forEach { it.accept(generator, code) }
-		
-		generatedFiles.add(codeFile.save(targetSourceDir))
 	}
 	
 	///
