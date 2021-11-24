@@ -55,8 +55,6 @@ class YamlSnapshoterTest {
 			val actual = file.readText()
 			val expected = readResource("model-filled.yml")
 			
-			File("tmp/kaka.yml").writeText(actual)
-			
 			assertEquals(expected, actual)
 		}
 		finally {
