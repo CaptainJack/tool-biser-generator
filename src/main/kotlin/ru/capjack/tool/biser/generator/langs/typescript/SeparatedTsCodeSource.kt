@@ -15,7 +15,7 @@ class SeparatedTsCodeSource(
 	cutLibPrefix: String? = null
 ) : CodeSource() {
 	
-	private val genPath = rootDir.resolve(genPath).toAbsolutePath()
+	val genPath = rootDir.resolve(genPath).toAbsolutePath()
 	private val libPath = rootDir.resolve(libPath).toAbsolutePath()
 	
 	private val cutGenPrefix = cutGenPrefix?.replace('.', '/')

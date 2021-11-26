@@ -16,7 +16,7 @@ import ru.capjack.tool.biser.generator.model.PrimitiveType
 import ru.capjack.tool.biser.generator.model.Type
 import ru.capjack.tool.biser.generator.model.TypeVisitor
 
-abstract class AbstractCodersGenerator<C: CodeSource>(
+abstract class AbstractCodersGenerator(
 	protected val model: Model,
 	targetPackage: String,
 	encodersName: String? = null,
@@ -57,7 +57,9 @@ abstract class AbstractCodersGenerator<C: CodeSource>(
 		}
 		
 		override fun visitNullableType(type: NullableType, data: MutableSet<Type>) {
-			data.add(type)
+			if (type.original != PrimitiveType.STRING) {
+				data.add(type)
+			}
 		}
 	}
 	
@@ -83,7 +85,7 @@ abstract class AbstractCodersGenerator<C: CodeSource>(
 		decoders.add(type)
 	}
 	
-	open fun generate(source: C) {
+	open fun generate(source: CodeSource) {
 		val encoderNames = DefaultCoderNameVisitor(createInnerCoderNameScopeVisitor(biserEncodersName))
 		val decoderNames = DefaultCoderNameVisitor(createInnerCoderNameScopeVisitor(biserDecodersName))
 		
@@ -120,7 +122,7 @@ abstract class AbstractCodersGenerator<C: CodeSource>(
 		typeNames: TypeVisitor<String, DependedCode>
 	): TypeVisitor<Unit, Code>
 	
-	protected abstract fun generate(source: C, targetEntityName: EntityName, types: Set<Type>, generator: TypeVisitor<Unit, Code>)
+	protected abstract fun generate(source: CodeSource, targetEntityName: EntityName, types: Set<Type>, generator: TypeVisitor<Unit, Code>)
 }
 
 

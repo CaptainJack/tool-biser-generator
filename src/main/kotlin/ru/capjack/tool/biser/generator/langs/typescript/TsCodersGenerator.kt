@@ -1,6 +1,7 @@
 package ru.capjack.tool.biser.generator.langs.typescript
 
 import ru.capjack.tool.biser.generator.Code
+import ru.capjack.tool.biser.generator.CodeSource
 import ru.capjack.tool.biser.generator.CoderNameScopeVisitor
 import ru.capjack.tool.biser.generator.CodersTypeAggregator
 import ru.capjack.tool.biser.generator.DependedCode
@@ -14,7 +15,7 @@ class TsCodersGenerator(
 	encodersName: String? = null,
 	decodersName: String? = null,
 	private val generateSources: Boolean = true
-) : AbstractCodersGenerator<SeparatedTsCodeSource>(
+) : AbstractCodersGenerator(
 	model,
 	targetPackage,
 	encodersName,
@@ -50,7 +51,9 @@ class TsCodersGenerator(
 		return TsDecoderGenerator(model, decoders, decoderNames, typeNames)
 	}
 	
-	override fun generate(source: SeparatedTsCodeSource) {
+	override fun generate(source: CodeSource) {
+		super.generate(source)
+		
 		if (generateSources) {
 			
 			val entities = mutableSetOf<Entity>()
@@ -106,7 +109,7 @@ class TsCodersGenerator(
 		}
 	}
 	
-	override fun generate(source: SeparatedTsCodeSource, targetEntityName: EntityName, types: Set<Type>, generator: TypeVisitor<Unit, Code>) {
+	override fun generate(source: CodeSource, targetEntityName: EntityName, types: Set<Type>, generator: TypeVisitor<Unit, Code>) {
 		if (types.isEmpty()) {
 			return
 		}

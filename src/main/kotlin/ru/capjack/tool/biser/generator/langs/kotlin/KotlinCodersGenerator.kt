@@ -3,6 +3,7 @@ package ru.capjack.tool.biser.generator.langs.kotlin
 import ru.capjack.tool.biser.generator.CoderNameScopeVisitor
 import ru.capjack.tool.biser.generator.CodersTypeAggregator
 import ru.capjack.tool.biser.generator.Code
+import ru.capjack.tool.biser.generator.CodeSource
 import ru.capjack.tool.biser.generator.DependedCode
 import ru.capjack.tool.biser.generator.langs.DefaultCoderNameVisitor
 import ru.capjack.tool.biser.generator.langs.AbstractCodersGenerator
@@ -18,7 +19,7 @@ class KotlinCodersGenerator(
 	encodersName: String? = null,
 	decodersName: String? = null,
 	private val internal: Boolean = false,
-) : AbstractCodersGenerator<KotlinCodeSource>(
+) : AbstractCodersGenerator(
 	model,
 	targetPackage,
 	encodersName,
@@ -54,7 +55,7 @@ class KotlinCodersGenerator(
 		return KotlinDecoderGenerator(model, decoders, decoderNames, typeNames)
 	}
 	
-	override fun generate(source: KotlinCodeSource, targetEntityName: EntityName, types: Set<Type>, generator: TypeVisitor<Unit, Code>) {
+	override fun generate(source: CodeSource, targetEntityName: EntityName, types: Set<Type>, generator: TypeVisitor<Unit, Code>) {
 		if (types.isEmpty()) {
 			return
 		}
